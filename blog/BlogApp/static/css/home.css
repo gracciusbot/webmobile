@@ -1,0 +1,68 @@
+/* home.css */
+
+/* Estilizando o container principal */
+.container {
+    margin-top: 20px;
+}
+
+/* Estilo para os cartões */
+.card {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 15px;
+}
+
+.card-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 15px;
+}
+
+/* Estilo para os botões de seguir e like */
+.follow-button, .like-button {
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.follow-button:hover, .like-button:hover {
+    background-color: #0056b3;
+}
+
+/* Estilo para a área de comentários */
+.comment-form {
+    margin-top: 10px;
+}
+
+.comment-form textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    resize: none;
+}
+
+.comment-form button {
+    width: 100%;
+}
+
+/* Estilo de tipografia */
+.card-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.card-text {
+    color: #6c757d;
+}

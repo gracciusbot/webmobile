@@ -1,0 +1,83 @@
+/* Estilos gerais */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa; /* Cor de fundo leve */
+    color: #212529; /* Texto escuro */
+    margin: 0;
+    padding: 0;
+}
+
+/* Navbar */
+.navbar {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra para a navbar */
+}
+
+/* Títulos */
+h1, h5 {
+    color: #343a40; /* Cor de título */
+}
+
+/* Cards */
+.card {
+    transition: transform 0.2s; /* Efeito de transição */
+}
+
+.card:hover {
+    transform: scale(1.02); /* Aumenta o tamanho do card ao passar o mouse */
+}
+
+/* Botões */
+.btn-primary {
+    background-color: #007bff; /* Cor personalizada */
+    border: none; /* Remove bordas */
+}
+
+.btn-primary:hover {
+    background-color: #0056b3; /* Cor ao passar o mouse */
+}
+
+/* Container */
+.container {
+    max-width: 1200px; /* Largura máxima do container */
+}
+
+
+.navbar-toggler {
+    width: 60px; /* Ajuste conforme necessário */
+    height: 60px; /* Ajuste conforme necessário */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent; /* Remova a cor de fundo */
+    border: none; /* Remove a borda */
+    position: relative; /* Para posicionar a imagem */
+    overflow: hidden; /* Para ocultar qualquer parte da imagem que exceda o botão */
+}
+
+.navbar-toggler::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0; /* Insira o caminho da sua imagem */
+    background-size: cover; /* Ajusta a imagem para cobrir o botão */
+    background-position: center; /* Centraliza a imagem */
+    opacity: 0.5; /* Ajuste a opacidade conforme necessário */
+    z-index: 1; /* Coloca a imagem atrás do SVG */
+}
+
+.navbar-toggler svg {
+    width: 24px; /* Ajuste conforme necessário */
+    height: 24px; /* Ajuste conforme necessário */
+    color: #ffffff; /* Cor do SVG */
+    z-index: 2; /* Coloca o SVG acima da imagem */
+}
+
+
+.nav-link.active {
+    font-weight: bold; /* Deixa o texto em negrito */
+    color: #ffffff; /* Ou uma cor que contraste com o fundo */
+    background-color: #007bff; /* Cor de fundo para destacar o link ativo */
+    border-radius: 5px; /* Bordas arredondadas */
+}

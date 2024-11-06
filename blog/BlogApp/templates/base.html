@@ -1,0 +1,111 @@
+<!DOCTYPE html> 
+<html lang="pt-br">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Meu WebApp{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}"> <!-- Custom styles -->
+    {% block extra_css %}{% endblock %} 
+    <style>
+        /* CSS adicional para delimitar a altura do container */
+        #main-content {
+            padding-top: 80px; /* Para evitar sobreposição com a navbar */
+            max-height: calc(100vh - 100px); /* Altura máxima considerando navbar e rodapé */
+            overflow-y: auto; /* Permitir rolagem vertical se necessário */
+        }
+        /* Estilo para os ícones da navbar */
+        .navbar-icons {
+            display: flex;
+            gap: 15px; /* Espaçamento entre os ícones */
+            align-items: center; /* Centraliza verticalmente os ícones */
+        }
+    </style>
+</head>
+
+<body>
+    <!--## NAVBAR FIXA NO TOPO ##-->
+    <nav class="navbar navbar-dark bg-dark d-none d-lg-flex fixed-top">
+        <div class="container-fluid">
+            
+            <button class="navbar-toggler rounded-circle" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDarkNavbar" aria-controls="offcanvasDarkNavbar" aria-label="Toggle navigation">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 6h18M3 12h18m-18 6h18" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </button>
+            
+        
+            <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar" aria-labelledby="offcanvasDarkNavbarLabel">
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title" id="offcanvasDarkNavbarLabel">Menu</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body">
+                    <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="{% url 'home' %}">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container-fluid px-3" id="main-content"> <!-- Ajustando o padding para não sobrepor a navbar -->
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <nav class="navbar navbar-dark bg-dark d-lg-none fixed-bottom"> <!-- NAV BAR / BUTTONS -->
+        <div class="container-fluid" style="width:360px" style="height:900px">
+            <div class="navbar-icons d-flex justify-content-between w-100">
+                <!-- Ícones SVG -->
+                <a href="{% url 'home' %}"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="#60809E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 22V12H15V22" stroke="#60809E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+
+                <a href="#"><svg xmlns="http://www.w3.org/2000/svg" width="25" height="24" viewBox="0 0 25 24" fill="none">
+                  <path d="M4.75 3H20.75C21.2804 3 21.7891 3.21071 22.1642 3.58579C22.5393 3.96086 22.75 4.46957 22.75 5V11C22.75 13.6522 21.6964 16.1957 19.8211 18.0711C17.9457 19.9464 15.4022 21 12.75 21C11.4368 21 10.1364 20.7413 8.92317 20.2388C7.70991 19.7362 6.60752 18.9997 5.67893 18.0711C3.80357 16.1957 2.75 13.6522 2.75 11V5C2.75 4.46957 2.96071 3.96086 3.33579 3.58579C3.71086 3.21071 4.21957 3 4.75 3V3Z" stroke="#60809E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M8.75 10L12.75 14L16.75 10" stroke="#60809E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg></a>
+
+                <a href="#"><svg xmlns="http://www.w3.org/2000/svg" width="61" height="60" viewBox="0 0 61 60" fill="none">
+                  <circle cx="30.5" cy="30" r="30" fill="#1686EF"/>
+                  <path d="M30.837 20.2246V40.4493M20.7246 30.337H40.9493" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg></a>
+
+                <a href="#"><svg xmlns="http://www.w3.org/2000/svg" width="25" height="24" viewBox="0 0 25 24" fill="none">
+                  <path d="M18.25 8C18.25 6.4087 17.6179 4.88258 16.4926 3.75736C15.3674 2.63214 13.8413 2 12.25 2C10.6587 2 9.13258 2.63214 8.00736 3.75736C6.88214 4.88258 6.25 6.4087 6.25 8C6.25 15 3.25 17 3.25 17H21.25C21.25 17 18.25 15 18.25 8Z" stroke="#60809E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M13.98 21C13.8042 21.3031 13.5519 21.5547 13.2482 21.7295C12.9446 21.9044 12.6004 21.9965 12.25 21.9965C11.8996 21.9965 11.5554 21.9044 11.2518 21.7295C10.9482 21.5547 10.6958 21.3031 10.52 21" stroke="#60809E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg></a>
+
+                <a href="{%url 'profile' %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#60809E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#60809E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar" aria-labelledby="offcanvasDarkNavbarLabel">
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title" id="offcanvasDarkNavbarLabel">Menu</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+            <div class="offcanvas-body">
+        </div>
+    </nav>
+
+    <script src="{% static 'bootstrap.bundle.min.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+</body>
+</html>

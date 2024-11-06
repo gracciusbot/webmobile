@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}"> <!-- CSS específico para a home -->
+{% endblock %}
+
+{% block content %}
+    <div class="container"> <!-- Container principal -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-12 text-center">
+                <h1 class="mb-5">Posts</h1> <!-- Título com margem inferior para separar dos posts -->
+            </div>
+        </div>
+        <div class="row d-flex"> <!-- Grid layout para organizar os posts -->
+            {% for post in posts %}
+                <div class="col-12 col-sm-6 col-md-4 mb-4 d-flex align-items-stretch">
+                    <div class="card h-100 text-decoration-none shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <p class="text-muted mb-0">Autor: <a href="{% url 'profile_detail' post.author.id %}">{{ post.author.username }}</a></p>
+                    
+                            <button class="follow-button" data-user-id="{{ post.author.id }}">
+                                {% if user.is_authenticated and post.author in request.user.following.all %}
+                                    Deixar de seguir
+                                {% else %}
+                                    Seguir
+                                {% endif %}
+                            </button>
+                            <span id="followers-count-{{ post.author.id }}">{{ post.author.profile.followers_count }} seguidores</span>
+                            
+                        </div>
+                        <a href="{% url 'post_detail' post.id %}" class="text-decoration-none">
+                            <img src="{{ post.photo_post.url }}" class="card-img-top img-fluid" alt="{{ post.title }}" style="max-height: 250px; object-fit: cover;">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">{{ post.title }}</h5>
+                                <p class="card-text">{{ post.subscription }}</p>
+                            </div>
+
+                            <div class="card-footer text-start">
+                                <p>Likes: {{ post.likes_count }}</p>
+                                    
+                                <form action="{% url 'like_post' post.id %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit">Like</button>
+                                </form>
+                            </div>
+
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        // LIKE SCRIPT // 
+        document.querySelectorAll('.like-button').forEach(button => {
+            button.addEventListener('click', function(event) {
+                event.preventDefault(); // Impede o redirecionamento do botão
+                const postId = this.getAttribute('data-post-id');
+                const isLiked = this.textContent.includes('Descurtir');
+        
+                fetch(`/like/${postId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.likes_count !== undefined) {
+                        document.getElementById(`likes-count-${postId}`).textContent = data.likes_count;
+                        this.textContent = isLiked ? 'Curtir' : 'Descurtir';
+                    }
+                })
+                .catch(error => console.error('Erro:', error));
+            });
+        });
+
+        // Comment functionality
+        document.querySelectorAll('.comment-form').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                const content = this.querySelector('textarea').value;
+
+                fetch(`/post/${postId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: new URLSearchParams({'content': content})
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;  // Redireciona para a página do post
+                    }
+                })
+                .catch(error => console.error('Erro:', error));
+            });
+        });
+
+        // Follow functionality
+        document.querySelectorAll('.follow-button').forEach(button => {
+            button.addEventListener('click', function(event) {
+                event.preventDefault(); // Impede o redirecionamento do botão
+                const userId = this.getAttribute('data-user-id');
+                const isFollowing = this.textContent.includes('Deixar de seguir');
+        
+                fetch(`/follow/${userId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.followers_count !== undefined) {
+                        document.getElementById(`followers-count-${userId}`).textContent = data.followers_count + " seguidores";
+                        this.textContent = isFollowing ? 'Seguir' : 'Deixar de seguir';
+                    }
+                })
+                .catch(error => console.error('Erro:', error));
+            });
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+{% endblock %}
