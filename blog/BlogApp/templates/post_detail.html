@@ -1,45 +1,26 @@
-{% extends 'base.html' %}
-{% block title %}{{ post.title }}{% endblock %}
-{% load static %}
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'bootstrap.min.css' %}"> <!-- CSS específico para o post detalhado -->
-{% endblock %}
+<h2>{{ post.title }}</h2>
+<p>{{ post.subscription }}</p>
 
-{% block content %}
-<div class="container mt-5"> <!-- Container principal -->
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-8">
-            <h1 class="mb-4">{{ post.title }}</h1> <!-- Título do post -->
-            <img src="{{ post.photo_post.url }}" class="img-fluid mb-4" alt="{{ post.title }}"> <!-- Imagem do post -->
-            <p class="text-muted">Autor: {{ post.author.username }} | Publicado em: {{ post.created_at|date:"F j, Y" }}</p> <!-- Autor e data -->
-            <div class="post-content">
-                <p>{{ post.subscription }}</p> <!-- Conteúdo do post -->
-                <div class="comments">
-                    <h5>Comentários</h5>
-                    {% for comment in comments %}
-                        <p><strong>{{ comment.author.username }}:</strong> {{ comment.content }} <em>({{ comment.created_at|date:"d/m/Y H:i" }})</em></p>
-                    {% empty %}
-                        <p>Não há comentários ainda.</p>
-                    {% endfor %}
-                    
-                    {% if user.is_authenticated %}
-                        <form method="POST" action="{% url 'post_detail' post.pk %}">
-                            {% csrf_token %}
-                            <textarea name="content" required></textarea>
-                            <button type="submit" class="btn btn-primary">Comentar</button>
-                        </form>
-                    {% else %}
-                        <p>Você precisa estar logado para comentar.</p>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="mt-4">
-                <a href="{% url 'home' %}" class="btn btn-secondary">Voltar para a lista de posts</a> <!-- Botão de retorno -->
-            </div>
+<!-- Exibição de comentários -->
+<h3>Comentários</h3>
+<ul>
+    {% for comment in comments %}
+        <li><strong>{{ comment.author.username }}</strong>: {{ comment.content }}</li>
+    {% endfor %}
+</ul>
 
-            
-        </div>
-        
+<!-- Formulário de comentários -->
+<h4>Adicionar comentário</h4>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Enviar</button>
+</form>
+
+{% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="message">{{ message }}</div>
+        {% endfor %}
     </div>
-</div>
-{% endblock %}
+{% endif %}

@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from BlogApp.forms import ProfileForm
+from BlogApp.forms import ProfileForm, CommentForm
 
 # View para a página inicial exibindo os posts
 class HomeView(LoginRequiredMixin, ListView):
@@ -58,16 +58,23 @@ class PostView(LoginRequiredMixin, View):
     def get(self, request, pk):
         post = get_object_or_404(Post, id=pk)
         comments = post.comments.all()  # Obter todos os comentários do post
-        return render(request, 'post_detail.html', {'post': post, 'comments': comments})
+        form = CommentForm()  # Formulário vazio para ser preenchido
+
+        return render(request, 'post_detail.html', {'post': post, 'comments': comments, 'form': form})
 
     def post(self, request, pk):
         post = get_object_or_404(Post, id=pk)
-        content = request.POST.get('content')
+        form = CommentForm(request.POST)
 
-        if request.user.is_authenticated and content.strip():
+        if form.is_valid():
+            content = form.cleaned_data['content']
             Comment.objects.create(post=post, author=request.user, content=content)
-
+            messages.success(request, "Comentário adicionado com sucesso.")
+        else:
+            messages.error(request, "Erro ao adicionar o comentário. Por favor, tente novamente.")
+        
         return redirect('post_detail', pk=post.id)
+
     
 # View para seguir/desseguir um usuário
 class FollowUserView(LoginRequiredMixin, View):
@@ -127,30 +134,27 @@ class RegisterView(View):
 
 # View para perfil do usuário
 class ProfileView(LoginRequiredMixin, DetailView):
-    template_name = 'profile.html'
-    login_url = '/login/'
     model = User
+    template_name = 'profile.html'
     context_object_name = 'user_profile'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_to_view = self.object
-
-        # Posts do usuário
-        context['posts'] = Post.objects.filter(author=user_to_view)
-        
-        # Contagem de seguidores
-        context['followers_count'] = Follow.objects.filter(following=user_to_view).count()
-        
-        # Verificar se o usuário logado está seguindo o usuário visualizado
-        context['following'] = Follow.objects.filter(follower=self.request.user, following=user_to_view).exists()
-
+        context['profile_form'] = ProfileForm(instance=user_to_view.profile)  # Adicionando o formulário de perfil
         return context
 
-    def get_object(self, queryset=None):
-        # Obter o objeto com base no pk, que é passado na URL
-        pk = self.kwargs.get('pk', self.request.user.pk)  # Se pk não estiver na URL, use o do usuário autenticado
-        return get_object_or_404(User, pk=pk)
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        profile_form = ProfileForm(request.POST, request.FILES, instance=user.profile)  # Incluindo request.FILES para permitir o upload de arquivo
+
+        if profile_form.is_valid():
+            profile_form.save()
+            messages.success(request, "Perfil atualizado com sucesso!")
+        else:
+            messages.error(request, "Erro ao atualizar o perfil.")
+        
+        return redirect('profile', pk=user.pk)
 
 # View para login
 class LoginView(View):

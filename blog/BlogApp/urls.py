@@ -4,7 +4,6 @@ from django.urls import path
 from . import views
 from .views import HomeView, LikePostView, ProfileView, LoginView, LogoutView, RegisterView, PostView, FollowUserView
 
-
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
     path('post/like/<int:pk>', LikePostView.as_view(), name='like_post'),

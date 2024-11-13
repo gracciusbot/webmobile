@@ -12,44 +12,58 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     likes = models.ManyToManyField(User, related_name='liked_posts', blank=True)
-    
+
     def __str__(self):
         return f"{self.title} / {self.author}"
 
-    def clean(self):
-        if len(self.title) > 25:
-            raise ValidationError('O título não pode ter mais de 25 caracteres.')
-        if len(self.subscription) > 100:
-            raise ValidationError('A descrição não pode ter mais de 100 caracteres.')
-
-    def is_liked_by(self, user):
-        return user in self.likes.all()
+    def toggle_like(self, user):
+        if self.likes.filter(id=user.id).exists():
+            self.likes.remove(user)
+        else:
+            self.likes.add(user)
 
     def likes_count(self):
         return self.likes.count()
+
 
 class Follow(models.Model):
     follower = models.ForeignKey(User, related_name='following_users', on_delete=models.CASCADE)
     following = models.ForeignKey(User, related_name='followers_users', on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ('follower', 'following')  # Impede duplicatas
+        unique_together = ('follower', 'following')  # Garante que cada relacionamento seja único
 
     def __str__(self):
         return f"{self.follower.username} follows {self.following.username}"
 
+    def save(self, *args, **kwargs):
+        """Ao salvar um novo 'follow', atualiza a contagem de seguidores."""
+        super().save(*args, **kwargs)
+        self.following.profile.update_followers_count()
+
+    def delete(self, *args, **kwargs):
+        """Ao deletar um 'follow', atualiza a contagem de seguidores."""
+        super().delete(*args, **kwargs)
+        self.following.profile.update_followers_count()
+
+
+
+
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-
-    def followers_count(self):
-        # Conta os seguidores a partir do modelo Follow, onde a pessoa é 'following'
-        return Follow.objects.filter(following=self.user).count()
-
-    followers_count.short_description = 'Contagem de Seguidores'
+    photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
+    bio = models.TextField(blank=True, null=True)
+    followers_count = models.PositiveIntegerField(default=0)  # Novo campo para contagem de seguidores
 
     def __str__(self):
         return f"Profile of {self.user.username}"
+
+    def update_followers_count(self):
+        """Atualiza o campo followers_count com a contagem atual de seguidores."""
+        self.followers_count = Follow.objects.filter(following=self.user).count()
+        self.save()
+
 
     
 class Comment(models.Model):
@@ -60,6 +74,13 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.author.username}: {self.content[:20]}"
+
+    def clean(self):
+        if not self.content.strip():
+            raise ValidationError("O conteúdo do comentário não pode ser vazio.")
+        if len(self.content) > 500:
+            raise ValidationError("O comentário não pode ter mais de 500 caracteres.")
+
     
 
 class Like(models.Model):

@@ -1,25 +1,37 @@
-from rest_framework import generics, permissions, status
+from rest_framework import viewsets, generics, permissions, status
+from rest_framework.authentication import TokenAuthentication
 from BlogApp.models import Post, Follow, Comment, Profile
-from .serializers import PostSerializer, FollowSerializer, CommentSerializer, ProfileSerializer
+from .serializers import LoginSerializer, PostSerializer, FollowSerializer, CommentSerializer, ProfileSerializer
 from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
 from rest_framework.exceptions import PermissionDenied
 from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-
-# views.py
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
-from rest_framework import status
 
+
+# Home View
+class HomeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Returns the list of posts with their comments.
+        """
+        user_profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        posts = Post.objects.all()  # You can filter posts if necessary
+        serializer = PostSerializer(posts, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+# Login View
 class LoginView(APIView):
     permission_classes = [AllowAny]  # Permite que qualquer um acesse (sem estar autenticado)
-
+    
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
@@ -39,38 +51,39 @@ class LoginView(APIView):
             return Response({"error": "Credenciais inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+# Like Post View
 class LikePostView(APIView):
-    permission_classes = [IsAuthenticated]  # Garantir que o usuário esteja logado
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
         """
-        Adiciona ou remove um like de um post
+        Alterna o like no post. Se o usuário já curtiu, remove o like.
         """
-        post = get_object_or_404(Post, id=pk)
+        user = request.user
+        post = get_object_or_404(Post, pk=pk)
 
-        # Verifica se o usuário já curtiu o post
-        if post.likes.filter(id=request.user.id).exists():
-            post.likes.remove(request.user)
-            return Response({"message": "Like removido com sucesso!"}, status=status.HTTP_200_OK)
-        else:
-            post.likes.add(request.user)
-            return Response({"message": "Like adicionado com sucesso!"}, status=status.HTTP_200_OK)
+        # Chama o método toggle_like no modelo para adicionar ou remover o like
+        post.toggle_like(user)
 
+        # Retorna a contagem de likes atualizada
+        return Response({"likes_count": post.likes_count()}, status=status.HTTP_200_OK)
 
 # Post CRUD
 class PostListCreateView(generics.ListCreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
+        # Cria o post com o autor sendo o usuário autenticado
         serializer.save(author=self.request.user)
 
 
 class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
         post = super().get_object()
@@ -81,9 +94,8 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 # Follow CRUD
 class FollowUserView(APIView):
-    queryset = Follow.objects.all()
-    serializer_class = FollowSerializer
     permission_classes = [IsAuthenticated]  # Garantir que o usuário esteja logado
+    authentication_classes = [TokenAuthentication]
 
     def post(self, request, user_id):
         """
@@ -93,7 +105,7 @@ class FollowUserView(APIView):
 
         # Verifica se o usuário está tentando se seguir
         if user_to_follow == request.user:
-            return JsonResponse({'error': 'Você não pode seguir a si mesmo.'}, status=400)
+            return Response({'error': 'Você não pode seguir a si mesmo.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Verifica se já existe um relacionamento de follow
         follow, created = Follow.objects.get_or_create(follower=request.user, following=user_to_follow)
@@ -107,26 +119,41 @@ class FollowUserView(APIView):
         # Contagem de seguidores
         followers_count = Follow.objects.filter(following=user_to_follow).count()
 
-        # Retorna o status de "seguindo" e a contagem de seguidores
-        return JsonResponse({
+        return Response({
             'following': following,
             'followers_count': followers_count
         })
 
-# Comment CRUD
-class CommentListCreateView(generics.ListCreateAPIView):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+# Comment CRUD
+class CommentCreateView(APIView):
+    permission_classes = [IsAuthenticated]  # Garantir que o usuário esteja logado
+
+    def post(self, request, post_id):
+        """
+        Cria um novo comentário para o post especificado
+        """
+        post = get_object_or_404(Post, id=post_id)
+        content = request.data.get('content')  # O conteúdo do comentário vem no corpo da requisição
+
+        if not content:
+            return Response({"error": "O conteúdo do comentário não pode ser vazio."}, status=status.HTTP_400_BAD_REQUEST)
+
+        comment = Comment.objects.create(
+            post=post,
+            author=request.user,
+            content=content
+        )
+
+        # Retornar o comentário recém-criado
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
         comment = super().get_object()
@@ -136,10 +163,33 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # Profile CRUD
-class ProfileDetailView(generics.RetrieveAPIView):
+# Profile Create View
+class ProfileCreateView(APIView):
+    permission_classes = [IsAuthenticated]  # Garantir que o usuário esteja logado
+
+    def post(self, request):
+        """
+        Cria um novo perfil para o usuário autenticado
+        """
+        user = request.user  # O perfil será criado para o usuário autenticado
+        data = request.data
+        data['user'] = user.id  # Associando o perfil ao usuário
+
+        serializer = ProfileSerializer(data=data)
+        
+        if serializer.is_valid():
+            serializer.save()  # Salva o perfil no banco de dados
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Profile Detail View
+class ProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        return self.request.user.profile
+        profile = super().get_object()
+        if profile.user != self.request.user and not self.request.user.is_staff:
+            raise PermissionDenied("Você não tem permissão para editar ou excluir este perfil.")
+        return profile

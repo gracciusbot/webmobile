@@ -1,22 +1,15 @@
-<h2>Perfil de {{ user_profile.username }}</h2>
+<h2>Editar Perfil de {{ user_profile.username }}</h2>
 
-{% if following %}
-    <p>Você está seguindo este usuário.</p>
-{% else %}
-    <p>Você não está seguindo este usuário.</p>
-    <form method="POST" action="{% url 'follow_user' user_profile.id %}">
-        {% csrf_token %}
-        <button type="submit">Seguir</button>
-    </form>
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ profile_form.as_p }}
+    <button type="submit">Salvar alterações</button>
+</form>
+
+{% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="message">{{ message }}</div>
+        {% endfor %}
+    </div>
 {% endif %}
-
-<p>Followers count: {{ followers_count }}</p>
-
-<h3>Posts de {{ user_profile.username }}:</h3>
-<ul>
-    {% for post in posts %}
-        <li>{{ post.title }}</li>
-    {% empty %}
-        <li>Este usuário ainda não tem posts.</li>
-    {% endfor %}
-</ul>
